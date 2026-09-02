@@ -21,11 +21,27 @@ export const BANK = {
 };
 
 export const PRICES = {
-  adventureBook: 44900, // cents (R449.00)
+  adventureBook: 44900, // cents (R449.00) — A5 softcover
+  adventureBookHardcover: 75000, // cents (R750.00) — A4 hardcover
   occasionBook: 39900, // cents (R399.00)
   pudo: 6000, // R60
   postnetOrDoor: 11000, // R110
 };
+
+export const BOOK_FORMATS = [
+  {
+    id: "a5-softcover",
+    label: "A5 Softcover",
+    description: "Light and lovely — perfect for little hands and bedtime reading.",
+    price: PRICES.adventureBook,
+  },
+  {
+    id: "a4-hardcover",
+    label: "A4 Hardcover",
+    description: "A big, durable keepsake with a sturdy cover — made to last for years.",
+    price: PRICES.adventureBookHardcover,
+  },
+] as const;
 
 export function formatRand(cents: number): string {
   return `R${(cents / 100).toFixed(0)}`;

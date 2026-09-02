@@ -117,6 +117,8 @@ export function CheckoutForm() {
           companion: data.order.companion,
           courier: data.order.courierOption,
           ageGroup: data.order.ageGroup,
+          format: (payload.configSnapshot as { formatLabel?: string } | null | undefined)
+            ?.formatLabel,
           occasion: payload.occasion,
           emailSent:
             data.receipts?.customerEmail?.provider === "formsubmit",

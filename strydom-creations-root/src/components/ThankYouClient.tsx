@@ -21,6 +21,7 @@ type ThankYouData = {
   companion?: string;
   courier?: string;
   ageGroup?: string;
+  format?: string;
   occasion?: string;
   emailSent?: boolean;
 };
@@ -55,6 +56,7 @@ export function ThankYouClient({ orderNumber }: { orderNumber?: string }) {
       return adventureOrderMessage({
         orderNumber: data.orderNumber,
         age: data.ageGroup,
+        format: data.format,
         theme: data.theme,
         problem: data.problem,
         language: data.language,

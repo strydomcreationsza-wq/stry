@@ -26,7 +26,7 @@ export default function HomePage() {
               Books that grow with your child — written just for them
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-[#7a5f56] sm:text-lg">
-              {BUSINESS.name} creates personalised learning adventure books and occasion keepsakes.
+              {BUSINESS.name}{" "}creates personalised learning adventure books and occasion keepsakes.
               Your child is the hero. Real photos, gentle lessons, and stories you&apos;ll read again
               and again.
             </p>

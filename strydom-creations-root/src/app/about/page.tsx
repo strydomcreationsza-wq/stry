@@ -19,7 +19,7 @@ export default function AboutPage() {
           </h1>
           <div className="mt-5 space-y-4 text-base leading-relaxed text-[#7a5f56]">
             <p>
-              {BUSINESS.name} began with a simple wish: books that feel like they belong on your child&apos;s
+              {BUSINESS.name}{" "}began with a simple wish: books that feel like they belong on your child&apos;s
               shelf — not mass-produced, not generic, but gently crafted around the skills you&apos;re
               practising at home.
             </p>

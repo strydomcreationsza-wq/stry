@@ -4,7 +4,7 @@ import { createOrder } from "@/lib/orders";
 import { generateOrderNumber } from "@/lib/utils";
 import { sendOrderReceipts } from "@/lib/email";
 import { orderWhatsAppMessage, sendOwnerWhatsApp } from "@/lib/whatsappNotify";
-import { COURIER_OPTIONS, PRICES } from "@/lib/config";
+import { COURIER_OPTIONS, PRICES, BOOK_FORMATS } from "@/lib/config";
 
 const bodySchema = z.object({
   category: z.enum(["adventure", "occasion"]),
@@ -40,9 +40,11 @@ export async function POST(request: Request) {
 
     const data = parsed.data;
 
-    const expectedBook =
-      data.category === "adventure" ? PRICES.adventureBook : PRICES.occasionBook;
-    if (data.bookPrice !== expectedBook) {
+    const allowedBookPrices =
+      data.category === "adventure"
+        ? BOOK_FORMATS.map((f) => f.price)
+        : [PRICES.occasionBook];
+    if (!allowedBookPrices.includes(data.bookPrice)) {
       return NextResponse.json({ error: "Unexpected book price" }, { status: 400 });
     }
 

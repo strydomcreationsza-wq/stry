@@ -2,6 +2,7 @@ import { BUSINESS } from "./config";
 
 export type AdventureSelection = {
   age?: string;
+  format?: string;
   theme?: string;
   problem?: string;
   language?: string;
@@ -50,6 +51,7 @@ export function adventureOrderMessage(data: AdventureSelection): string {
     ``,
     `Child's name: ${data.childName || "—"}`,
     `Age: ${data.age || "—"}`,
+    `Book format: ${data.format || "—"}`,
     `Theme: ${data.theme || "—"}`,
     `Learning focus: ${data.problem || "—"}`,
     `Language: ${data.language || "—"}`,

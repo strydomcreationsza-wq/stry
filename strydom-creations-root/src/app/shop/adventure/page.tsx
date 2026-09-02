@@ -23,7 +23,8 @@ export default function AdventureShopPage() {
           Customised Learning Adventure Books
         </h1>
         <p className="mt-3 text-[#7a5f56]">
-          Follow each step in order. Books are {formatRand(PRICES.adventureBook)} plus courier. You&apos;ll
+          Follow each step in order. Choose an A5 softcover from {formatRand(PRICES.adventureBook)} or
+          an A4 hardcover from {formatRand(PRICES.adventureBookHardcover)}, plus courier. You&apos;ll
           pay at checkout, then send photos on WhatsApp.
         </p>
       </div>

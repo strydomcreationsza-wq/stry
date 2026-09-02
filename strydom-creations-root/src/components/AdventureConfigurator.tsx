@@ -5,11 +5,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AGE_OPTIONS,
+  BOOK_FORMATS,
   COMPANIONS,
   LANGUAGES,
   PROBLEMS_BY_AGE,
   THEMES,
-  PRICES,
   formatRand,
 } from "@/lib/config";
 import { adventureOrderMessage } from "@/lib/whatsapp";
@@ -20,6 +20,7 @@ import { ArrowLeft, ArrowRight, Camera } from "lucide-react";
 
 const STEPS = [
   "Age",
+  "Format",
   "Theme",
   "Focus",
   "Language",
@@ -31,6 +32,8 @@ const STEPS = [
 
 export type AdventureConfig = {
   age: string;
+  formatId: string;
+  formatLabel: string;
   themeId: string;
   themeName: string;
   problemId: string;
@@ -48,6 +51,7 @@ export function AdventureConfigurator() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [age, setAge] = useState("");
+  const [formatId, setFormatId] = useState("");
   const [themeId, setThemeId] = useState("");
   const [problemId, setProblemId] = useState("");
   const [language, setLanguage] = useState("");
@@ -57,12 +61,14 @@ export function AdventureConfigurator() {
   const [error, setError] = useState("");
 
   const theme = THEMES.find((t) => t.id === themeId);
+  const bookFormat = BOOK_FORMATS.find((f) => f.id === formatId);
   const problems = age ? PROBLEMS_BY_AGE[age] || [] : [];
   const problem = problems.find((p) => p.id === problemId);
   const companion = COMPANIONS.find((c) => c.id === companionId);
 
   const waPreview = adventureOrderMessage({
     age: age ? `Age ${age}` : undefined,
+    format: bookFormat ? `${bookFormat.label} (${formatRand(bookFormat.price)})` : undefined,
     theme: theme?.name,
     problem: problem?.label,
     language: language || undefined,
@@ -77,27 +83,31 @@ export function AdventureConfigurator() {
       setError("Please choose an age.");
       return false;
     }
-    if (step === 2 && !themeId) {
+    if (step === 2 && !formatId) {
+      setError("Please choose a book format.");
+      return false;
+    }
+    if (step === 3 && !themeId) {
       setError("Please choose a theme.");
       return false;
     }
-    if (step === 3 && !problemId) {
+    if (step === 4 && !problemId) {
       setError("Please choose a learning focus.");
       return false;
     }
-    if (step === 4 && !language) {
+    if (step === 5 && !language) {
       setError("Please choose a language.");
       return false;
     }
-    if (step === 5 && childName.trim().length < 2) {
+    if (step === 6 && childName.trim().length < 2) {
       setError("Please enter your child's name.");
       return false;
     }
-    if (step === 6 && !companionId) {
+    if (step === 7 && !companionId) {
       setError("Please choose a companion animal.");
       return false;
     }
-    if (step === 8) {
+    if (step === 9) {
       const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
       if (!ok) {
         setError("Please enter a valid email address.");
@@ -115,6 +125,8 @@ export function AdventureConfigurator() {
     }
     const config: AdventureConfig = {
       age,
+      formatId,
+      formatLabel: bookFormat?.label || "",
       themeId,
       themeName: theme?.name || "",
       problemId,
@@ -128,8 +140,8 @@ export function AdventureConfigurator() {
 
     const payload = {
       category: "adventure",
-      productName: `Adventure Book — ${config.themeName}`,
-      bookPrice: PRICES.adventureBook,
+      productName: `Adventure Book — ${config.themeName} (${config.formatLabel})`,
+      bookPrice: bookFormat?.price || BOOK_FORMATS[0].price,
       childName: config.childName,
       ageGroup: `Age ${config.age}`,
       theme: config.themeName,
@@ -187,6 +199,40 @@ export function AdventureConfigurator() {
 
         {step === 2 && (
           <section>
+            <h2 className="font-display text-2xl font-semibold text-[#3d2c29]">Choose your book format</h2>
+            <p className="mt-2 text-sm text-[#7a5f56]">
+              Pick between a compact softcover and a large keepsake hardcover.
+            </p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              {BOOK_FORMATS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFormatId(f.id)}
+                  className={cn(
+                    "rounded-2xl border p-5 text-left transition",
+                    formatId === f.id
+                      ? "border-[#c4785a] bg-[#fff5ef] ring-2 ring-[#c4785a]/30"
+                      : "border-[#ead9cd] hover:border-[#d9b9a8]",
+                  )}
+                >
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="font-display text-lg font-semibold text-[#3d2c29]">
+                      {f.label}
+                    </span>
+                    <span className="rounded-full bg-[#f3e0d4] px-3 py-1 text-sm font-semibold text-[#8b5a4a]">
+                      from {formatRand(f.price)}
+                    </span>
+                  </span>
+                  <span className="mt-2 block text-sm text-[#7a5f56]">{f.description}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {step === 3 && (
+          <section>
             <h2 className="font-display text-2xl font-semibold text-[#3d2c29]">Pick a theme</h2>
             <p className="mt-2 text-sm text-[#7a5f56]">
               Two adventure worlds to start — more themes later this year. You can&apos;t type a custom theme.
@@ -217,7 +263,7 @@ export function AdventureConfigurator() {
           </section>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <section>
             <h2 className="font-display text-2xl font-semibold text-[#3d2c29]">What shall we gently work on?</h2>
             <p className="mt-2 text-sm text-[#7a5f56]">
@@ -244,7 +290,7 @@ export function AdventureConfigurator() {
           </section>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <section>
             <h2 className="font-display text-2xl font-semibold text-[#3d2c29]">Language</h2>
             <p className="mt-2 text-sm text-[#7a5f56]">Choose the language for your book.</p>
@@ -266,7 +312,7 @@ export function AdventureConfigurator() {
           </section>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <section>
             <h2 className="font-display text-2xl font-semibold text-[#3d2c29]">Child&apos;s name</h2>
             <p className="mt-2 text-sm text-[#7a5f56]">
@@ -285,7 +331,7 @@ export function AdventureConfigurator() {
           </section>
         )}
 
-        {step === 6 && (
+        {step === 7 && (
           <section>
             <h2 className="font-display text-2xl font-semibold text-[#3d2c29]">Choose a companion</h2>
             <p className="mt-2 text-sm text-[#7a5f56]">
@@ -312,7 +358,7 @@ export function AdventureConfigurator() {
           </section>
         )}
 
-        {step === 7 && (
+        {step === 8 && (
           <section>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f3e0d4] text-[#8b5a4a]">
               <Camera className="h-6 w-6" />
@@ -348,7 +394,7 @@ export function AdventureConfigurator() {
           </section>
         )}
 
-        {step === 8 && (
+        {step === 9 && (
           <section>
             <h2 className="font-display text-2xl font-semibold text-[#3d2c29]">Your email</h2>
             <p className="mt-2 text-sm text-[#7a5f56]">
@@ -371,11 +417,12 @@ export function AdventureConfigurator() {
               <ul className="mt-2 space-y-1 text-[#7a5f56]">
                 <li>Child: {childName || "—"}</li>
                 <li>Age {age} · {theme?.name || "—"}</li>
+                <li>Format: {bookFormat?.label || "—"}</li>
                 <li>Focus: {problem?.label || "—"}</li>
                 <li>Language: {language || "—"}</li>
                 <li>Companion: {companion?.label || "—"}</li>
                 <li className="pt-1 font-semibold text-[#3d2c29]">
-                  Book price: {formatRand(PRICES.adventureBook)}
+                  Book price: {bookFormat ? formatRand(bookFormat.price) : "—"}
                 </li>
               </ul>
               <p className="mt-3 text-xs text-[#9a7f74]">
