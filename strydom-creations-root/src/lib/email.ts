@@ -1,20 +1,67 @@
 import { BANK, BUSINESS, formatRandExact, statusLabel } from "./config";
 import type { Order } from "@/db/schema";
+import nodemailer from "nodemailer";
 
 /**
- * Zero-config email delivery via FormSubmit.co.
+ * Email delivery.
  *
- * How it works:
- *   1. First time we send an email to BUSINESS.email, FormSubmit sends a
- *      confirmation link to that address.
- *   2. You click the link once — done. All future emails deliver instantly to
- *      your inbox, no API key needed.
+ * Primary: Gmail SMTP via nodemailer — set GMAIL_APP_PASSWORD (and optionally
+ * GMAIL_USER, defaults to the business email) in the environment. Emails are
+ * sent from the business Gmail account to both the business inbox and the
+ * customer, with proper reply-to headers.
  *
- * We also send an auto-response back to the customer with a copy of their
- * order details.
- *
- * Optional override: set FORMSUBMIT_ENDPOINT env var to point somewhere else.
+ * Fallback 1: FormSubmit.co (business inbox only — customers can't receive
+ * FormSubmit mail without activating, so this is best-effort).
+ * Fallback 2: log to the server console so nothing is silently lost.
  */
+
+const SMTP_USER = process.env.GMAIL_USER || process.env.SMTP_USER || BUSINESS.email;
+const SMTP_PASS = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+
+let cachedTransporter: nodemailer.Transporter | null = null;
+
+function getTransporter(): nodemailer.Transporter | null {
+  if (!SMTP_PASS) return null;
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: String(process.env.SMTP_SECURE || "true") !== "false",
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+    });
+  }
+  return cachedTransporter;
+}
+
+async function sendViaSmtp(payload: EmailPayload): Promise<{
+  ok: boolean;
+  id: string;
+  provider: string;
+  error?: string;
+}> {
+  const transporter = getTransporter();
+  if (!transporter) {
+    return { ok: false, id: "", provider: "gmail", error: "SMTP not configured" };
+  }
+  try {
+    const info = await transporter.sendMail({
+      from: `"${payload.fromName || BUSINESS.name}" <${SMTP_USER}>`,
+      to: payload.to,
+      subject: payload.subject,
+      text: payload.text,
+      html: payload.html,
+      replyTo: payload.replyTo,
+    });
+    return { ok: true, id: info.messageId || `smtp_${Date.now()}`, provider: "gmail" };
+  } catch (error) {
+    return {
+      ok: false,
+      id: "",
+      provider: "gmail",
+      error: error instanceof Error ? error.message : "send failed",
+    };
+  }
+}
 
 const OWNER_ENDPOINT =
   process.env.FORMSUBMIT_ENDPOINT ||
@@ -144,6 +191,13 @@ async function sendToCustomer(payload: EmailPayload): Promise<{
 export async function sendEmail(
   payload: EmailPayload,
 ): Promise<{ ok: boolean; id: string; provider: string; error?: string }> {
+  // Primary: Gmail SMTP (works for both business and customer emails).
+  const smtp = await sendViaSmtp(payload);
+  if (smtp.ok) return smtp;
+  if (SMTP_PASS) {
+    console.warn("[email:gmail-failed]", { to: payload.to, error: smtp.error });
+  }
+
   const isToBusiness = payload.to.toLowerCase() === BUSINESS.email.toLowerCase();
 
   const result = isToBusiness
@@ -215,9 +269,13 @@ export function buildOrderInvoice(order: Order): {
     .join("\n");
 
   const html = `
-    <div style="font-family: Georgia, serif; color: #3d2c29; max-width: 560px; margin: 0 auto; padding: 24px;">
-      <h1 style="color: #8b5a4a; font-size: 22px; margin-bottom: 8px;">Thank you for your order</h1>
-      <p style="color: #7a5f56;">Your order <strong style="color:#3d2c29;">${order.orderNumber}</strong> is confirmed and awaiting EFT payment.</p>
+    <div style="font-family: Georgia, serif; color: #3d2c29; max-width: 560px; margin: 0 auto; padding: 24px; background: #fffaf5; border: 1px solid #ead9cd; border-radius: 12px;">
+      <h1 style="color: #8b5a4a; font-size: 22px; margin: 0 0 8px;">Thank you for your order</h1>
+      <p style="color: #7a5f56; margin: 0 0 16px;">Your order <strong style="color:#3d2c29;">${order.orderNumber}</strong> is confirmed and awaiting EFT payment.</p>
+      <pre style="font-family: Georgia, serif; white-space: pre-wrap; word-break: break-word; color: #3d2c29; font-size: 14px; line-height: 1.65; margin: 0;">${lines
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</pre>
     </div>
   `;
 
