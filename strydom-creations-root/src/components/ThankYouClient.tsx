@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatRandExact } from "@/lib/config";
@@ -27,8 +27,6 @@ type ThankYouData = {
   emailSent?: boolean;
 };
 
-const emptySubscribe = () => () => {};
-
 function readThankYouData(): ThankYouData | null {
   try {
     const raw = sessionStorage.getItem("lsn_thankyou");
@@ -43,13 +41,14 @@ export function ThankYouClient() {
   // keeps this whole page statically rendered and CDN-cacheable.
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("order") || undefined;
-  // sessionStorage is a client-only external store — useSyncExternalStore keeps
-  // the SSR snapshot null and only reads it in the browser.
-  const data = useSyncExternalStore<ThankYouData | null>(
-    emptySubscribe,
-    readThankYouData,
-    () => null,
-  );
+  // Read sessionStorage ONCE after mount. (Previously this used
+  // useSyncExternalStore with a getSnapshot that returned a fresh object on
+  // every call — that caused an infinite re-render loop that crashed the
+  // browser tab right after placing an order.)
+  const [data, setData] = useState<ThankYouData | null>(null);
+  useEffect(() => {
+    setData(readThankYouData());
+  }, []);
 
   const ref = data?.orderNumber || orderNumber;
 
