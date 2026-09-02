@@ -39,6 +39,12 @@ export function CheckoutForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Preload the thank-you page while the customer fills in the form, so the
+    // post-payment navigation is instant and doesn't depend on the network.
+    router.prefetch("/thank-you");
+  }, [router]);
+
+  useEffect(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (!raw) return;
