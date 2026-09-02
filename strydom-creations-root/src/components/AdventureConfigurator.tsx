@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AGE_OPTIONS,
@@ -50,6 +50,13 @@ const STORAGE_KEY = "lsn_checkout";
 export function AdventureConfigurator() {
   const router = useRouter();
   const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    // Preload the checkout page in the background so the final
+    // "Continue to checkout" jump is instant, even on a weak connection.
+    router.prefetch("/checkout");
+  }, [router]);
+
   const [age, setAge] = useState("");
   const [formatId, setFormatId] = useState("");
   const [themeId, setThemeId] = useState("");

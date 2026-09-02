@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatRand, PRICES } from "@/lib/config";
 import { WhatsAppButton } from "./WhatsAppButton";
 import { occasionOrderMessage } from "@/lib/whatsapp";
@@ -23,6 +23,11 @@ export function OccasionProductClient({ product }: { product: Product }) {
   const [email, setEmail] = useState("");
   const [childName, setChildName] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Preload checkout so the jump after "pay" is instant on any connection.
+    router.prefetch("/checkout");
+  }, [router]);
 
   const waMessage = occasionOrderMessage({
     productName: product.name,
