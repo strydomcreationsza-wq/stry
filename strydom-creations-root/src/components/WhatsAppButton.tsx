@@ -41,21 +41,18 @@ export function WhatsAppButton({
         : "border border-[#25D366] text-[#128C4A] hover:bg-[#e8f8ee]";
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    e.preventDefault();
     const onMobile = isMobileDevice();
 
     if (onMobile) {
-      // Mobile: open the wa.me link — it launches the WhatsApp app directly.
-      try {
-        window.location.href = mobileHref;
-      } catch {
-        window.open(mobileHref, "_blank", "noopener,noreferrer");
-      }
+      // Mobile: let the link open in a NEW tab (anchor target="_blank").
+      // Never navigate the current page away — if WhatsApp fails to open,
+      // the user keeps their place on the site (e.g. the order confirmation).
       return;
     }
 
     // Desktop: show a friendly modal that lets the user pick WhatsApp Web,
     // copy the message, or copy the number — no api.whatsapp.com redirect.
+    e.preventDefault();
     setShowModal(true);
   }
 
